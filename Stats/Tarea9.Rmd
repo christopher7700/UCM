@@ -1,0 +1,260 @@
+---
+title: "Tarea Estadistica - 01/04/2022"
+author: Christopher A. Rodriguez Principe
+output: html_document
+---
+
+
+Este estudio se desarrollo con el proposito de evaluar la Anchura de Craneo sobe una muestra de la poblacion.
+Queremo comparar el tamaño del craneo de los individuos que vivireon durante el periodo predinastico *tardio*
+y hacer cmparacion con el periodo predinastico *temprano*
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r ,warning=FALSE, include=FALSE}
+library(readxl)
+library(dplyr)
+library(vtable)
+library(kableExtra)
+library(psych) 
+library(moments)
+library(KScorrect)
+library(nortest)
+library(car)
+```
+
+Presentamos los Datos de Anchura del Craneo durante periodos Predinastico Tardio(2) y Temprano(1)
+```{r}
+#Dataframe de todos los datos
+Datos = read_excel("~/Desktop/DS UCM /Modulo 9 /Libro1.xlsx")
+as.data.frame(Datos)
+```
+
+Separamos los Dataframes por temporada
+```{r}
+#Lista de datos Tempranos
+DatosTempranos <- filter(Datos,Datos$`Época histórica`==1)
+
+
+#Lista de Datos Tardio
+DatosTardio <- filter(Datos,Datos$`Época histórica`==2)
+
+
+```
+
+
+
+# Estadisticas de Epoca predinastica Tardio
+```{r ,warning=FALSE}
+#Creamo dataframe con resumen estadistico
+Tardio = describeBy(DatosTardio)
+Tardio <- Tardio[-c(1), ]
+Tardio <- Tardio[,-c(1)]
+
+#creamos variable pearson
+Tardio$pearson <- Tardio$sd/Tardio$mean
+quant = sapply(DatosTardio[-c(1)], quantile)
+
+print(Tardio)
+print(quant)
+
+# Diagrama de caja y bigote
+boxplot(DatosTardio[2], main = "Predinástico Tardio ", horizontal = FALSE)
+```
+
+# Descripcion de Predinastico Tardio:
+La siguiente sub-muestra de datos de cráneo del Predinastico Tardio nos presenta las siguientes medidas. 
+La muestra contiene 30 datos  de achura del cráneo con una media, mediana y desviacion media de 132.37, 133, 1.48 respectivamente.
+La muestra tiene un valor minimo de anchura de craneo de 131(mm) y anchura maxima de 135(mm) durante este periodo, 
+esto representa un rango de solamente 4(mm) durante la duracion de la epoca. En adición nuestra muestra presenta un coeficiente de variación pearson de ~0.01.
+Posee una distribucion asimetica positiva de ~0.19 demostrando que existe mayor concentracion de valores a la derecha de la media que a su izquierda. 
+Con un coefiiente de kurtosis de -0.37 presentando una distribucion platicurtica. 
+
+Presentado por la Caja de bigote. Los valores de los cuartiles son los siguientes:
+Q1 representa el 25% de los datos tiene anchura de 132(mm) o menos.
+Q3 representa el 75% de los datos tiene anchura de 133(mm) o menos.
+Q4 representa el ~100% de los datos tiene anchura de 135(mm) o menos.
+
+Observamos en nuestro diagrama de caja y bigote. El tercer cuartil y la mediana
+coinciden con el mismo valor, esto puede ser una consecuencia de no tener variedad de anchura de los craneos.
+En otras palabras los valores se repiten durante el periodo. 
+Existe solamente una medida de nuestra muestra de valores que es atipico. 
+La anchura de este valor atipico es de 135(mm).
+
+
+
+
+
+
+# Estadisticas de Epoca predinastica Temprana
+```{r ,warning=FALSE}
+#Creamo dataframe con resumen estadistico
+Tempra = describeBy(DatosTempranos)
+Tempra <- Tempra[-c(1), ]
+
+Tempra <- Tempra[,-c(1)]
+
+#creamos variable pearson
+Tempra$pearson <- Tempra$sd/Tempra$mean
+quant = sapply(DatosTempranos[-c(1)], quantile)
+
+print(Tempra)
+print(quant)
+
+#Desplegamos el diagrama de caja y bigote
+boxplot(DatosTempranos[2], main = "Predinástico Temprano ", horizontal = FALSE)
+```
+
+# Descripcion de Predinastico Temprana:
+La siguiente sub-muestra de datos de cráneo del Predinastico Tardio nos presenta las siguientes medidas. 
+La muestra contiene 30 datos  de achura del cráneo con una media, mediana y desviacion media de 131.53, 131.5	, 0.74 respectivamente.
+La muestra tiene un valor minimo de anchura de craneo de 130(mm) y anchura maxima de 134(mm) durante este periodo, 
+esto representa un rango de solamente 4(mm) durante la duracion de la epoca. En adición nuestra muestra presenta un coeficiente de variación pearson de ~0.01.
+Posee una distribucion asimetica positiva de ~0.62 demostrando que existe mayor concentracion de valores a la derecha de la media que a su izquierda. 
+Con un coefiiente de kurtosis de 1.02 presentando una distribucion leptocurtica. 
+
+Presentado por la Caja de bigote. Los valores de los cuartiles son los siguientes:
+Q1 representa el 25% de los datos tiene anchura de 131(mm) o menos.
+Q3 representa el 75% de los datos tiene anchura de 132(mm) o menos.
+Q4 representa el ~100% de los datos tiene anchura de 134(mm) o menos.
+
+Nuestra submuestra presenta solamente un valor atipico de 134(mm) durante
+el periodo predinastico tardio. 
+
+
+# Test Lilliefors
+
+```{r}
+#Test Temprano
+lillie.test(DatosTardio$`Anchura del cráneo`)
+```
+```{r}
+#Test Tardio
+lillie.test(DatosTempranos$`Anchura del cráneo`)
+```
+
+Con nuestras dos muestras continuas de Datos Predinastico Temprano y Tardio intentamos describir una prueba de distribucion normal.
+La primera opcion para esta prueba deberia ser el KS.test pero dado que tenemos muy pocos datos y exiten varios elementos en la sub-muestra que son repetidos hemos considerado el *Lilliefors test* para estudiar la distribucion.
+
+En nuestra prueba hemos establecido dos hipotesis(H0 y H1):
+
+H0: La muestra proviene de una distribucion normal.
+
+H1: La muestra NO poviene de un distribucion normal.
+
+
+Para *DatosTardio* p-value = 0.0001938. 
+Dado p-value = 0.0001938 < 0.05 concluimos que la anchura del craneo 
+para el periodo predinastico tardio NO sigue distribucion normal.
+Se rechaza H0.
+
+Para *DatosTempranos* p-value = 9.677e-05
+Dado p-value = 9.677e-05 < 0.05 concluimos que la anchura del craneo 
+para el periodo predinastico temprano NO sigue distribucion normal.
+Se rechaza H0.
+
+
+
+
+
+
+## Condiciones de un T test para una muestra independiente:
+Explico qué condiciones se deben cumplir para contrastar la hipótesis de que ambas medias son iguales. 
+
+
+*Independencia* -  Las observaciones tienen que ser independientes
+unas de las otras. Para ello el muestreo debe ser aleatorio y el tamaño de la
+muestra inferior al 10% de la población.
+
+  Resultado = *Verdadero* 
+
+
+*Normalidad*- Las poblaciones que se comparan tienen que distribuirse de
+forma normal. 
+
+  Hemos demonstrado en el apartado anterior en el ejercicio 1.b que 
+  nuestros datos NO poseen distribucion normal.
+  Resultado = *Falso*
+
+*Igualdad de varianza*- a varianza de ambas poblaciones comparadas
+debe de ser igual.  
+
+  Resultado = *Verdadero*
+  
+  
+  Comprobamos con el Levene- Test si las varianzas de ambos sub-muestras se asemejan. 
+  H0: Las varianzas de las dos muestras son iguales.
+  H1: Las varianzas de las dos muestras NO son iguales.
+
+```{r ,warning=FALSE}
+#comprobamos si las varianzas sin similares. 
+leveneTest(DatosTempranos$`Anchura del cráneo`,DatosTardio$`Anchura del cráneo`)
+```
+
+  p_value = 0.7793 > 0.05. 
+  NO se puede rechazar la hipótesis de que las varianzas de ambas
+  muestras son iguales.*Resultado* = las varianzas son iguales. 
+  NO rechazamos H0.
+
+
+## Test sobre igualdad de las medias
+  H0: Las medias de las dos muestras son iguales.
+  
+  H1: Las medias de las dos muestras NO son iguales.
+
+
+A pesar de que no se cumplen las tres condiciones para el T-test, 
+lo implementamos para observar como son las medias muestreadas.
+
+
+
+*T-test*
+```{r}
+
+#Calculamos los intervalos con un nivel de confianza de 0.90,0.95 y 0.99.
+
+t.test(x=DatosTempranos$`Anchura del cráneo`,y=DatosTardio$`Anchura del cráneo`,conf.level = 0.99)
+t.test(x=DatosTempranos$`Anchura del cráneo`,y=DatosTardio$`Anchura del cráneo`,conf.level = 0.95)
+t.test(x=DatosTempranos$`Anchura del cráneo`,y=DatosTardio$`Anchura del cráneo`,conf.level = 0.90)
+```
+
+Ahora evaluamos el p-value nuestro t-test para los datos predinasticos tardios y tempranos.
+Obtenemos un p-value= 0.0002329. Ahora evaluamos si se rechaza nuestra 
+hipotesis de si las medias son iguales:
+
+  P-value(0.0002329) es menor que 0.05.
+  
+Por lo tanto concluimos que hay evidencia en contra de que las medias de las dos muestras son iguales.
+Se rechaza la hipotesis nula.
+
+
+En adicion, Observamos que los intervalos de confianza son negativos:
+
+99 percent confidence interval:
+ -1.5658551 -0.3008116
+ 
+
+Si hacemos un calculo  de mean(Temprano) – mean (Tardio) = -0.93
+Esa resta nos demuestra que las medias de la muestra es más predominante sobre la epoca predinastica Tardia. 
+
+
+# Conclución
+
+Dado que el intervalo de confianza es menor que 0 podemos deducir que la 
+anchura de los craneos es mayor durante la epoca predinastica tardia que en la epoca predinastica temprana.
+
+(Anchura epoca tardia) > (Anchura epoca temprana)
+
+
+
+
+
+
+
+
+
+
+
